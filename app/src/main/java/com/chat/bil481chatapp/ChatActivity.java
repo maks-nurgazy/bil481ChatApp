@@ -100,8 +100,7 @@ public class ChatActivity extends AppCompatActivity {
         rvChat = (RecyclerView) findViewById(R.id.rvChat);
         mMessages = new ArrayList<>();
         mFirstLoad = true;
-        final String userId = ParseUser.getCurrentUser().getObjectId();
-        mAdapter = new ChatAdapter(ChatActivity.this, userId, mMessages);
+        mAdapter = new ChatAdapter(ChatActivity.this, mMessages);
         rvChat.setAdapter(mAdapter);
 
         // associate the LayoutManager with the RecylcerView
@@ -116,8 +115,8 @@ public class ChatActivity extends AppCompatActivity {
                 String data = etMessage.getText().toString();
 
                 Message message = new Message();
-                message.setBody(data);
-                message.setUserId(ParseUser.getCurrentUser().getObjectId());
+                message.setMessage(data);
+                message.setUserSender(ParseUser.getCurrentUser().getObjectId());
 
                 message.saveInBackground(new SaveCallback() {
                     @Override

@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.parse.ParseUser;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -23,11 +24,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
 
     private List<Message> mMessages;
     private Context mContext;
-    private String mUserId;
 
-    public ChatAdapter(Context context, String userId, List<Message> messages) {
+
+    public ChatAdapter(Context context,List<Message> messages) {
         mMessages = messages;
-        this.mUserId = userId;
         mContext = context;
     }
 
@@ -49,7 +49,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
 
     private boolean isMe(int position) {
         Message message = mMessages.get(position);
-        return message.getUserId() != null && message.getUserId().equals(mUserId);
+        return message.getUserSender() != null && message.getUserSender().equals(ParseUser.getCurrentUser().getUsername());
     }
 
     @Override
@@ -98,11 +98,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         @Override
         public void bindMessage(Message message) {
             Glide.with(mContext)
-                    .load(getProfileUrl(message.getUserId()))
+                    .load(getProfileUrl(message.getUserSender()))
                     .circleCrop() // create an effect of a round profile picture
                     .into(imageOther);
-            body.setText(message.getBody());
-            name.setText(message.getUserId()); // in addition to message show user ID
+            body.setText(message.getMessage());
+            name.setText(message.getUserSender()); // in addition to message show user ID
         }
     }
 
@@ -119,10 +119,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         @Override
         public void bindMessage(Message message) {
             Glide.with(mContext)
-                    .load(getProfileUrl(message.getUserId()))
+                    .load(getProfileUrl(message.getUserSender()))
                     .circleCrop() // create an effect of a round profile picture
                     .into(imageMe);
-            body.setText(message.getBody());
+            body.setText(message.getMessage());
         }
     }
 
