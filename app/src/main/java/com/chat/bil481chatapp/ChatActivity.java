@@ -171,10 +171,10 @@ public class ChatActivity extends AppCompatActivity {
                         mMessages.clear();
                         for(ParseObject parseObject: objects){
                             Message message = new Message();
-                            String messageContent = parseObject.getString("message");
                             message.setUserSender(parseObject.getString("sender"));
                             message.setUserReceiver(parseObject.getString("recipient"));
-                            message.setMessage(messageContent);
+                            message.setMessage(parseObject.getString("message"));
+                            message.setTranslation(parseObject.getString("translation"));
                             mMessages.add(message);
                         }
 

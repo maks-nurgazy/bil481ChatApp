@@ -8,6 +8,7 @@ public class Message extends ParseObject {
     public static final String USER_SENDER = "sender";
     public static final String USER_RECEIVER = "recipient";
     public static final String MESSAGE = "message";
+    public static final String TRANSLATION = "translation";
 
     public String getUserSender() {
         return getString(USER_SENDER);
@@ -29,7 +30,15 @@ public class Message extends ParseObject {
         return getString(MESSAGE);
     }
 
-    public void setMessage(String body) {
-        put(MESSAGE, body);
+    public void setMessage(String message) {
+        put(MESSAGE, message);
+    }
+
+    public String getTranslation() {
+        return getString(TRANSLATION);
+    }
+
+    public void setTranslation(String translation) {
+        put(TRANSLATION, translation);
     }
 }
