@@ -1,5 +1,10 @@
 package com.chat.bil481chatapp;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,17 +14,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.parse.FindCallback;
-import com.parse.LogInCallback;
-import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
@@ -35,39 +33,45 @@ public class ChatActivity extends AppCompatActivity {
     static final String TAG = ChatActivity.class.getSimpleName();
     static final int MAX_CHAT_MESSAGES_TO_SHOW = 50;
 
-    static final String USER_ID_KEY = "userId";
-    static final String BODY_KEY = "body";
-
     EditText etMessage;
     ImageButton btSend;
+
+
+    String activeUser = "";
 
     RecyclerView rvChat;
     ArrayList<Message> mMessages;
     ChatAdapter mAdapter;
-    // Keep track of initial load to scroll to the bottom of the ListView
+
     boolean mFirstLoad;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
-        startWithCurrentUser();
 
+        Intent intent = getIntent();
+
+        activeUser = intent.getStringExtra("username");
+        setTitle("Chat with "+ activeUser);
+
+        setupMessagePosting();
 
         refreshMessages();
 
         ParseLiveQueryClient parseLiveQueryClient = ParseLiveQueryClient.Factory.getClient();
 
         ParseQuery<Message> parseQuery = ParseQuery.getQuery(Message.class);
-        // This query can even be more granular (i.e. only refresh if the entry was added by some other user)
-        // parseQuery.whereNotEqualTo(USER_ID_KEY, ParseUser.getCurrentUser().getObjectId());
 
-        // Connect to Parse server
         SubscriptionHandling<Message> subscriptionHandling = parseLiveQueryClient.subscribe(parseQuery);
 
-        // Listen for CREATE events
         subscriptionHandling.handleEvent(SubscriptionHandling.Event.CREATE, new
                 SubscriptionHandling.HandleEventCallback<Message>() {
                     @Override
@@ -84,31 +88,38 @@ public class ChatActivity extends AppCompatActivity {
                         });
                     }
                 });
-
     }
 
-    // Get the userId from the cached currentUser object
-    void startWithCurrentUser() {
-        setupMessagePosting();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return true;
+    }
+
 
     void setupMessagePosting() {
-        // Find the text field and button
+
         etMessage = (EditText) findViewById(R.id.etMessage);
         btSend = (ImageButton) findViewById(R.id.btSend);
 
         rvChat = (RecyclerView) findViewById(R.id.rvChat);
         mMessages = new ArrayList<>();
         mFirstLoad = true;
-        mAdapter = new ChatAdapter(ChatActivity.this, mMessages);
+        mAdapter = new ChatAdapter(ChatActivity.this,  mMessages);
         rvChat.setAdapter(mAdapter);
 
-        // associate the LayoutManager with the RecylcerView
         final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(ChatActivity.this);
         linearLayoutManager.setReverseLayout(true);
         rvChat.setLayoutManager(linearLayoutManager);
 
-        // When send button is clicked, create message object on Parse
         btSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -116,14 +127,13 @@ public class ChatActivity extends AppCompatActivity {
 
                 Message message = new Message();
                 message.setMessage(data);
-                message.setUserSender(ParseUser.getCurrentUser().getObjectId());
+                message.setUserSender(ParseUser.getCurrentUser().getUsername());
+                message.setUserReceiver(activeUser);
 
                 message.saveInBackground(new SaveCallback() {
                     @Override
                     public void done(ParseException e) {
                         if (e == null) {
-                            Toast.makeText(ChatActivity.this, "Successfully created message on Parse",
-                                    Toast.LENGTH_SHORT).show();
                             refreshMessages();
                         } else {
                             Log.e(TAG, "Failed to save message", e);
@@ -135,30 +145,46 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    // Query messages from Parse so we can load them into the chat adapter
     void refreshMessages() {
-        // Construct query to execute
-        ParseQuery<Message> query = ParseQuery.getQuery(Message.class);
-        // Configure limit and sort order
-        query.setLimit(MAX_CHAT_MESSAGES_TO_SHOW);
 
-        // get the latest 50 messages, order will show up newest to oldest of this group
+
+        ParseQuery<ParseObject> query1 = new ParseQuery<ParseObject>("Message");
+        query1.whereEqualTo("sender",ParseUser.getCurrentUser().getUsername());
+        query1.whereEqualTo("recipient",activeUser);
+
+        ParseQuery<ParseObject> query2 = new ParseQuery<ParseObject>("Message");
+        query2.whereEqualTo("recipient",ParseUser.getCurrentUser().getUsername());
+        query2.whereEqualTo("sender",activeUser);
+
+        List<ParseQuery<ParseObject>> queries = new ArrayList<>();
+        queries.add(query1);
+        queries.add(query2);
+
+        ParseQuery<ParseObject> query = ParseQuery.or(queries);
         query.orderByDescending("createdAt");
-        // Execute query to fetch all messages from Parse asynchronously
-        // This is equivalent to a SELECT query with SQL
-        query.findInBackground(new FindCallback<Message>() {
-            public void done(List<Message> messages, ParseException e) {
-                if (e == null) {
-                    mMessages.clear();
-                    mMessages.addAll(messages);
-                    mAdapter.notifyDataSetChanged(); // update adapter
-                    // Scroll to the bottom of the list on initial load
-                    if (mFirstLoad) {
-                        rvChat.scrollToPosition(0);
-                        mFirstLoad = false;
+
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if (e==null){
+                    if (objects.size()>0){
+                        mMessages.clear();
+                        for(ParseObject parseObject: objects){
+                            Message message = new Message();
+                            String messageContent = parseObject.getString("message");
+                            message.setUserSender(parseObject.getString("sender"));
+                            message.setUserReceiver(parseObject.getString("recipient"));
+                            message.setMessage(messageContent);
+                            mMessages.add(message);
+                        }
+
+                        mAdapter.notifyDataSetChanged();
+                        if (mFirstLoad) {
+                            rvChat.scrollToPosition(0);
+                            mFirstLoad = false;
+                        }
+
                     }
-                } else {
-                    Log.e("message", "Error Loading Messages" + e);
                 }
             }
         });
@@ -174,6 +200,7 @@ public class ChatActivity extends AppCompatActivity {
             myHandler.postDelayed(this, POLL_INTERVAL);
         }
     };
+
 
     @Override
     protected void onResume() {
@@ -191,20 +218,4 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.settings,menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }

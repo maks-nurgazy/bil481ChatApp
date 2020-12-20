@@ -14,10 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".MessageActivity" />
+        <activity android:name=".ChatActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".UserListActivity" />
-        <activity android:name=".ChatActivity" />
         <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

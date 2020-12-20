@@ -18,5 +18,6 @@
     <string name="login">Login</string>
     <string name="mobile_number">Mobile Number</string>
     <string name="name">Name</string>
+    <string name="logout">Logout</string>
 
 </resources>
