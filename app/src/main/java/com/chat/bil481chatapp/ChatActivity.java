@@ -52,12 +52,9 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // User login
-        if (ParseUser.getCurrentUser() != null) { // start with existing user
-            startWithCurrentUser();
-        } else { // If not logged in, login as a new anonymous user
-            login();
-        }
+
+        startWithCurrentUser();
+
 
         refreshMessages();
 
@@ -168,19 +165,6 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    // Create an anonymous user using ParseAnonymousUtils and set sUserId
-    void login() {
-        ParseAnonymousUtils.logIn(new LogInCallback() {
-            @Override
-            public void done(ParseUser user, ParseException e) {
-                if (e != null) {
-                    Log.e(TAG, "Anonymous login failed: ", e);
-                } else {
-                    startWithCurrentUser();
-                }
-            }
-        });
-    }
 
     static final long POLL_INTERVAL = TimeUnit.SECONDS.toMillis(3);
     Handler myHandler = new Handler();

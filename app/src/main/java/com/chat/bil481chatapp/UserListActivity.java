@@ -1,6 +1,9 @@
 package com.chat.bil481chatapp;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -28,10 +31,18 @@ public class UserListActivity extends AppCompatActivity {
         setTitle("User list");
 
 
-
         ListView lvUser = findViewById(R.id.lvUser);
 
-        users.add("Test");
+        lvUser.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                Intent intent = new Intent(getApplicationContext(),MessageActivity.class);
+                intent.putExtra("username",users.get(position));
+                startActivity(intent);
+
+            }
+        });
 
         arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1,users);
         lvUser.setAdapter(arrayAdapter);

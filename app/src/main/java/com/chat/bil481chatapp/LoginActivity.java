@@ -24,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
         if (ParseUser.getCurrentUser()!=null){
             Intent intent = new Intent(getApplicationContext(),UserListActivity.class);
             startActivity(intent);
+            finish();
         }
     }
 
