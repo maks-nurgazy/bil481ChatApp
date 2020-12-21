@@ -57,14 +57,16 @@ public class LoginActivity extends AppCompatActivity {
     public void signUp(View view){
 
         EditText etEmail = findViewById(R.id.etRegEmail);
-        EditText etName = findViewById(R.id.etRegName);
+        EditText etLanguage = findViewById(R.id.etRegName);
         EditText etPhone = findViewById(R.id.etRegPhone);
         EditText etPassword = findViewById(R.id.etRegPassword);
 
         String email = etEmail.getText().toString().trim();
+        String language = etLanguage.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
         ParseUser user = new ParseUser();
+        user.put("language",language);
         user.setUsername(email);
         user.setPassword(password);
 
