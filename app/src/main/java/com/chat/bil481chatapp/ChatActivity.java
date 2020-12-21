@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,6 +16,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.TranslateOptions;
+import com.google.cloud.translate.Translation;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -24,6 +29,8 @@ import com.parse.SaveCallback;
 import com.parse.livequery.ParseLiveQueryClient;
 import com.parse.livequery.SubscriptionHandling;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +45,15 @@ public class ChatActivity extends AppCompatActivity {
 
 
     String activeUser = "";
+    String recipientLang = "ru";
 
     RecyclerView rvChat;
     ArrayList<Message> mMessages;
     ChatAdapter mAdapter;
 
     boolean mFirstLoad;
+
+    Translate translate;
 
 
     @Override
@@ -60,6 +70,7 @@ public class ChatActivity extends AppCompatActivity {
         Intent intent = getIntent();
 
         activeUser = intent.getStringExtra("username");
+        recipientLang = intent.getStringExtra("language");
         setTitle("Chat with "+ activeUser);
 
         setupMessagePosting();
@@ -104,13 +115,40 @@ public class ChatActivity extends AppCompatActivity {
         return true;
     }
 
+    public void getTranslateService() {
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        try (InputStream is = getResources().openRawResource(R.raw.bil481_chat_cloud_translation)) {
+
+            //Get credentials:
+            final GoogleCredentials myCredentials = GoogleCredentials.fromStream(is);
+
+            //Set credentials and get translate service:
+            TranslateOptions translateOptions = TranslateOptions.newBuilder().setCredentials(myCredentials).build();
+            translate = translateOptions.getService();
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+
+        }
+    }
+
+    public String translate(String targetLang, String originalText) {
+
+        Translation translation = translate.translate(originalText, Translate.TranslateOption.targetLanguage(targetLang), Translate.TranslateOption.model("base"));
+
+        return translation.getTranslatedText();
+    }
+
 
     void setupMessagePosting() {
 
-        etMessage = (EditText) findViewById(R.id.etMessage);
-        btSend = (ImageButton) findViewById(R.id.btSend);
+        etMessage = findViewById(R.id.etMessage);
+        btSend =  findViewById(R.id.btSend);
 
-        rvChat = (RecyclerView) findViewById(R.id.rvChat);
+        rvChat = findViewById(R.id.rvChat);
         mMessages = new ArrayList<>();
         mFirstLoad = true;
         mAdapter = new ChatAdapter(ChatActivity.this,  mMessages);
@@ -123,11 +161,16 @@ public class ChatActivity extends AppCompatActivity {
         btSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                getTranslateService();
+
                 String data = etMessage.getText().toString();
+
+                String translatedText = translate(recipientLang,data);
 
                 Message message = new Message();
                 message.setMessage(data);
-                message.setTranslation(data);
+                message.setTranslation(translatedText);
                 message.setUserSender(ParseUser.getCurrentUser().getUsername());
                 message.setUserReceiver(activeUser);
 

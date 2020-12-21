@@ -2,6 +2,8 @@ package com.chat.bil481chatapp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,6 +23,7 @@ import com.parse.ParseUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class UserListActivity extends AppCompatActivity implements RecyclerViewClickListener{
 
@@ -40,6 +43,11 @@ public class UserListActivity extends AppCompatActivity implements RecyclerViewC
         rvUserList.setAdapter(userAdapter);
         rvUserList.setLayoutManager(new LinearLayoutManager(this));
 
+        refreshUsernames();
+
+    }
+
+    public void refreshUsernames(){
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereNotEqualTo("username", ParseUser.getCurrentUser().getUsername());
 
@@ -48,9 +56,11 @@ public class UserListActivity extends AppCompatActivity implements RecyclerViewC
             public void done(List<ParseUser> objects, ParseException e) {
                 if (e==null){
                     if (objects.size() > 0){
+                        users.clear();
                         for (ParseUser parseUser : objects){
                             User user = new User();
                             user.setUsername(parseUser.getUsername());
+                            Log.d("Language ",parseUser.getString("language")+"");
                             user.setLanguage(parseUser.getString("language"));
                             users.add(user);
                         }
@@ -59,9 +69,32 @@ public class UserListActivity extends AppCompatActivity implements RecyclerViewC
                 }
             }
         });
-
     }
 
+    static final long POLL_INTERVAL = TimeUnit.SECONDS.toMillis(3);
+    Handler myHandler = new Handler();
+    Runnable mRefreshMessagesRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshUsernames();
+            myHandler.postDelayed(this, POLL_INTERVAL);
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Only start checking for new messages when the app becomes active in foreground
+        myHandler.postDelayed(mRefreshMessagesRunnable, POLL_INTERVAL);
+    }
+
+    @Override
+    protected void onPause() {
+        // Stop background task from refreshing messages, to avoid unnecessary traffic & battery drain
+        myHandler.removeCallbacksAndMessages(null);
+        super.onPause();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
