@@ -37,5 +37,5 @@ dependencies {
     implementation 'com.github.parse-community:ParseLiveQuery-Android:1.1.0' // for Parse Live Queries
     implementation 'com.parse.bolts:bolts-android:1.4.0'
     compileOnly 'com.google.android.wearable:wearable:2.8.1'// also required by Parse Live Queries
-
+    implementation 'com.google.cloud:google-cloud-storage:1.113.6'
 }
