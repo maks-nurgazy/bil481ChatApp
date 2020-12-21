@@ -166,25 +166,28 @@ public class ChatActivity extends AppCompatActivity {
 
                 String data = etMessage.getText().toString();
 
-                String translatedText = translate(recipientLang,data);
+                if (!data.isEmpty()) {
 
-                Message message = new Message();
-                message.setMessage(data);
-                message.setTranslation(translatedText);
-                message.setUserSender(ParseUser.getCurrentUser().getUsername());
-                message.setUserReceiver(activeUser);
+                    String translatedText = translate(recipientLang, data);
 
-                message.saveInBackground(new SaveCallback() {
-                    @Override
-                    public void done(ParseException e) {
-                        if (e == null) {
-                            refreshMessages();
-                        } else {
-                            Log.e(TAG, "Failed to save message", e);
+                    Message message = new Message();
+                    message.setMessage(data);
+                    message.setTranslation(translatedText);
+                    message.setUserSender(ParseUser.getCurrentUser().getUsername());
+                    message.setUserReceiver(activeUser);
+
+                    message.saveInBackground(new SaveCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if (e == null) {
+                                refreshMessages();
+                            } else {
+                                Log.e(TAG, "Failed to save message", e);
+                            }
                         }
-                    }
-                });
-                etMessage.setText(null);
+                    });
+                    etMessage.setText(null);
+                }
             }
         });
     }

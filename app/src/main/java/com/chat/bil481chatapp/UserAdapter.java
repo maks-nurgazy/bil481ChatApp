@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.List;
@@ -49,7 +51,11 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         CircleImageView circleImageView = holder.profileImage;
         TextView username = holder.tvUsername;
 
-        circleImageView.setImageResource(R.drawable.profile);
+
+        Glide.with(mContext)
+                .load(getProfileUrl(user.getUsername()))
+                .circleCrop() // create an effect of a round profile picture
+                .into(circleImageView);
         username.setText(user.getUsername());
 
     }

@@ -1,7 +1,5 @@
 package com.chat.bil481chatapp;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
@@ -10,14 +8,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.translate.Language;
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.TranslateOptions;
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
 import java.io.IOException;
@@ -29,7 +25,7 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     Translate translate;
 
     List<Language> languages;
-
+    boolean firstTime = true;
 
 
     @Override
@@ -40,18 +36,17 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         getTranslateService();
 
 
-
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, final int position, long id) {
-        Toast.makeText(getApplicationContext(),"Selected language: "+languages.get(position).getName(),Toast.LENGTH_SHORT).show();
-
-        ParseUser.getCurrentUser().put("language",languages.get(position).getCode());
-        ParseUser.getCurrentUser().saveInBackground();
-
-        Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
-
+        if (firstTime) {
+            firstTime = false;
+        } else {
+            Toast.makeText(getApplicationContext(), "Selected language: " + languages.get(position).getName(), Toast.LENGTH_SHORT).show();
+            ParseUser.getCurrentUser().put("language", languages.get(position).getCode());
+            ParseUser.getCurrentUser().saveInBackground();
+        }
 
     }
 
@@ -80,15 +75,21 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
 
             String[] lang = new String[size];
 
-            for (int i=0;i<size;i++){
+            String activeLanguage = (String) ParseUser.getCurrentUser().get("language");
+            int pos = 0;
+            for (int i = 0; i < size; i++) {
                 lang[i] = languages.get(i).getName();
+                if (activeLanguage != null && activeLanguage.equals(languages.get(i).getCode())) {
+                    pos = i;
+                }
             }
 
-            Spinner spin =  findViewById(R.id.spinner1);
+            Spinner spin = findViewById(R.id.spinner1);
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, lang);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spin.setAdapter(adapter);
             spin.setOnItemSelectedListener(this);
+            spin.setSelection(pos);
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
