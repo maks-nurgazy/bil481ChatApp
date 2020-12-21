@@ -11,6 +11,8 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.parse.FindCallback;
 import com.parse.ParseException;
@@ -20,35 +22,23 @@ import com.parse.ParseUser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserListActivity extends AppCompatActivity {
+public class UserListActivity extends AppCompatActivity implements RecyclerViewClickListener{
 
-    ArrayList<String> users = new ArrayList<>();
-
-    ArrayAdapter arrayAdapter;
+    ArrayList<User> users = new ArrayList<>();
+    UserAdapter userAdapter;
+    RecyclerView rvUserList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
-
         setTitle("User list");
+        rvUserList = findViewById(R.id.rvUserList);
 
 
-        ListView lvUser = findViewById(R.id.lvUser);
-
-        lvUser.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
-                intent.putExtra("username",users.get(position));
-                startActivity(intent);
-
-            }
-        });
-
-        arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1,users);
-        lvUser.setAdapter(arrayAdapter);
+        userAdapter = new UserAdapter(getApplicationContext(),users,this);
+        rvUserList.setAdapter(userAdapter);
+        rvUserList.setLayoutManager(new LinearLayoutManager(this));
 
         ParseQuery<ParseUser> query = ParseUser.getQuery();
         query.whereNotEqualTo("username", ParseUser.getCurrentUser().getUsername());
@@ -58,10 +48,13 @@ public class UserListActivity extends AppCompatActivity {
             public void done(List<ParseUser> objects, ParseException e) {
                 if (e==null){
                     if (objects.size() > 0){
-                        for (ParseUser user : objects){
-                            users.add(user.getUsername());
+                        for (ParseUser parseUser : objects){
+                            User user = new User();
+                            user.setUsername(parseUser.getUsername());
+                            user.setLanguage(parseUser.getString("language"));
+                            users.add(user);
                         }
-                        arrayAdapter.notifyDataSetChanged();
+                        userAdapter.notifyDataSetChanged();
                     }
                 }
             }
@@ -94,6 +87,12 @@ public class UserListActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
+    @Override
+    public void recyclerViewListClicked(View v, int position) {
+        Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+        intent.putExtra("username",users.get(position).getUsername());
+        intent.putExtra("language",users.get(position).getLanguage());
+        startActivity(intent);
+    }
 
 }
