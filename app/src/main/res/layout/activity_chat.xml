@@ -22,12 +22,15 @@
         android:paddingRight="0dp"
         android:layout_height="wrap_content" >
         <EditText
+            android:layout_marginLeft="8dp"
             android:id="@+id/etMessage"
             android:layout_toLeftOf="@+id/btSend"
             android:layout_alignBottom="@+id/btSend"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="top"
+            android:paddingLeft="10dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/edit_text_background"
+            android:gravity="center_vertical"
             android:hint="@string/message_hint"
             android:inputType="textShortMessage"
             android:imeOptions="actionSend"
